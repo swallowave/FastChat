@@ -15,10 +15,13 @@
       pkgs = import nixpkgs {
         overlays = with self.overlays; [
           default
+          gfx1100
         ];
 
         system = "x86_64-linux";
       };
+
+      gpuTargets = [ "gfx803" "gfx1100" ];
 
       llama = (builtins.mapAttrs makeLlama
         {
@@ -254,6 +257,103 @@
               })
             ];
           };
+
+          gfx1100 = finalPkgs: prevPkgs: {
+            miopen = prevPkgs.miopen.overrideAttrs (finalAttrs: prevAttrs: {
+              version = "5.5.0";
+
+              src = finalPkgs.fetchFromGitHub {
+                owner = "ROCmSoftwarePlatform";
+                repo = "MIOpen";
+                rev = "fd49e0e2e9d4ebe6bab0f1b1fb3d83ee50d603cd";
+                hash = "sha256-pkHcvXgvPA5H/748gd/mBZYvTyRDumq6FA1zguFVG28=";
+              };
+
+              meta = prevAttrs.meta // {
+                broken = false; # hip version differs
+              };
+            });
+
+            rocblas = (prevPkgs.rocblas.overrideAttrs (finalAttrs: prevAttrs: {
+              version = "5.5.0";
+
+              src = finalPkgs.fetchFromGitHub {
+                owner = "ROCmSoftwarePlatform";
+                repo = "rocBLAS";
+                rev = "b6b92074055ee87106530be49996230d36db146e";
+                hash = "sha256-eTLruO0uGyVQW7wrk92NlMJvqPVMamLBmgafXAL1sbk=";
+              };
+
+              meta = prevAttrs.meta // {
+                broken = false; # hip version differs
+              };
+            })).override {
+              inherit gpuTargets;
+            };
+
+            hipblas = prevPkgs.hipblas.overrideAttrs (finalAttrs: prevAttrs: {
+              version = "5.5.0";
+
+              src = finalPkgs.fetchFromGitHub {
+                owner = "ROCmSoftwarePlatform";
+                repo = "hipBLAS";
+                rev = "a89cfbed1381af078a2836345f6fd26cecd6ca6d";
+                hash = "sha256-pzW5SX+58UdSFu+OOiynRP6VF9TOQBus5KIlJaqcFoQ=";
+              };
+
+              meta = prevAttrs.meta // {
+                broken = false; # hip version differs
+              };
+            });
+
+            tensile = prevPkgs.tensile.overrideAttrs (finalAttrs: prevAttrs: {
+              version = "5.5.0"; # why doesn't this actually override the version ???
+
+              src = finalPkgs.fetchFromGitHub {
+                owner = "ROCmSoftwarePlatform";
+                repo = "Tensile";
+                rev = "2cf7a0fee76f5d0ce12f994816fb1773b1c21697";
+                hash = "sha256-idgmYmyhE/vtt78upXq5aahof1KTuVHcJ0p+FHCcIsM=";
+              };
+
+              meta = prevAttrs.meta // {
+                broken = false; # rocm llvm-project version differs
+              };
+            });
+
+            rocmlir = prevPkgs.rocmlir.overrideAttrs (finalAttrs: prevAttrs: {
+              version = "5.5.0";
+
+              src = finalPkgs.fetchFromGitHub {
+                owner = "ROCmSoftwarePlatform";
+                repo = "rocMLIR";
+                rev = "rocm-${finalAttrs.version}";
+                hash = "sha256-KbpdXDGfSz6GGBly3vdkfPB8bFsWRmx2vPLqswGMDl4=";
+              };
+
+              meta = prevAttrs.meta // {
+                broken = false; # rocm llvm-project version differs
+              };
+            });
+
+            rocsolver = (prevPkgs.rocsolver.overrideAttrs (finalAttrs: prevAttrs: {
+              version = "5.5.0";
+
+              meta = prevAttrs.meta // {
+                broken = false; # hip version differs
+              };
+            })).override {
+              inherit gpuTargets;
+            };
+
+            pythonPackagesExtensions = prevPkgs.pythonPackagesExtensions ++ [
+              (finalPy: prevPy: {
+                torchWithRocm = prevPy.torchWithRocm.override {
+                  inherit gpuTargets;
+                };
+              })
+            ];
+          };
         };
 
         devShells."x86_64-linux".default = pkgs.mkShell {
@@ -281,12 +381,12 @@
 
           shellHook = ''
             echo "================================================================================"
-            echo "🎉 You now have a development environment ready to run Vicuna!"
+            echo "🎉 You now have a development environment ready to run Vicuna on an RX 7900 XTX!"
             echo
             echo "If you don't already have a pre-built Vicuna model you can use this flake to generate one from a LLaMA model."
-            echo "Use \`nix search github:kira-bruneau/FastChat\` to find the variant you're looking for, and then build it with \`nix build\`."
+            echo "Use \`nix search github:kira-bruneau/FastChat/gfx1100\` to find the variant you're looking for, and then build it with \`nix build\`."
             echo
-            echo "For example: \`nix build github:kira-bruneau/FastChat#model/vicuna/v1-1/13b -o vicuna\`"
+            echo "For example: \`nix build github:kira-bruneau/FastChat/gfx1100#model/vicuna/v1-1/13b -o vicuna\`"
             echo "================================================================================"
           '';
         };
