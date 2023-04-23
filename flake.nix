@@ -278,6 +278,17 @@
               # wandb (dev tool only)
             ]))
           ];
+
+          shellHook = ''
+            echo "================================================================================"
+            echo "🎉 You now have a development environment ready to run Vicuna!"
+            echo
+            echo "If you don't already have a pre-built Vicuna model you can use this flake to generate one from a LLaMA model."
+            echo "Use \`nix search github:kira-bruneau/FastChat\` to find the variant you're looking for, and then build it with \`nix build\`."
+            echo
+            echo "For example: \`nix build github:kira-bruneau/FastChat#model/vicuna/v1-1/13b -o vicuna\`"
+            echo "================================================================================"
+          '';
         };
       };
 }
