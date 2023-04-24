@@ -15,13 +15,13 @@
       pkgs = import nixpkgs {
         overlays = with self.overlays; [
           default
-          gfx1100
+          gfx11n9
         ];
 
         system = "x86_64-linux";
       };
 
-      gpuTargets = [ "gfx803" "gfx1100" ];
+      gpuTargets = [ "gfx900" "gfx1100" ];
 
       llama = (builtins.mapAttrs makeLlama
         {
@@ -258,7 +258,7 @@
             ];
           };
 
-          gfx1100 = finalPkgs: prevPkgs: {
+          gfx11n9 = finalPkgs: prevPkgs: {
             miopen = prevPkgs.miopen.overrideAttrs (finalAttrs: prevAttrs: {
               version = "5.5.0";
 
@@ -384,9 +384,9 @@
             echo "🎉 You now have a development environment ready to run Vicuna on an RX 7900 XTX!"
             echo
             echo "If you don't already have a pre-built Vicuna model you can use this flake to generate one from a LLaMA model."
-            echo "Use \`nix search github:kira-bruneau/FastChat/gfx1100\` to find the variant you're looking for, and then build it with \`nix build\`."
+            echo "Use \`nix search github:kira-bruneau/FastChat/gfx11n9\` to find the variant you're looking for, and then build it with \`nix build\`."
             echo
-            echo "For example: \`nix build github:kira-bruneau/FastChat/gfx1100#model/vicuna/v1-1/13b -o vicuna\`"
+            echo "For example: \`nix build github:kira-bruneau/FastChat/gfx11n9#model/vicuna/v1-1/13b -o vicuna\`"
             echo "================================================================================"
           '';
         };
